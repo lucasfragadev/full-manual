@@ -3,6 +3,8 @@ const http = require('node:http');
 const hostname = '127.0.0.1';
 const port = 3000;
 
+const usuarios = [];
+
 const server = http.createServer((req, res) => {
   res.setHeader('Content-Type', 'application/json; charset=utf-8'); // Preciso passar o header 
 
@@ -42,6 +44,7 @@ const server = http.createServer((req, res) => {
 
     return req.on('end', () => {
       const dadosRecebidos = JSON.parse(body);
+      usuarios.push(dadosRecebidos);
       res.statusCode = 201; // status de created
       return res.end(JSON.stringify({
         message: "Usuário criado com sucesso!",
@@ -108,25 +111,35 @@ const server = http.createServer((req, res) => {
   if (req.url === '/deletar' && req.method === 'DELETE') {
     res.statusCode = 200;
 
+    debugger;
+
+    usuarios.length = 0;
+
     return res.end(JSON.stringify({
-      message: "Todos os arquivos foram deletados!"
+      message: "Todos os usuários foram deletados!"
     }))
   };
 
-  if (req.url === '/usuarios' && req.method === 'GET') {
-    const usuarios = [
-      {
-        "name": "Lucas",
-        "email": "lucasfraga@dev.com",
-        "idade": 35
-      },
+  if (req.url.startsWith('/deletar/') && req.method === 'DELETE') {
+    const partesUrl = req.url.split('/');
+    const idUrl = partesUrl[2];
 
-      {
-        "name": "Paloma",
-        "email": "palomamendes@odonto.com",
-        "idade": 26
-      }
-    ];
+    const idUsuario = usuarios.findIndex(usuario => usuario.id === Number(idUrl));
+
+    if (idUsuario === -1) {
+      res.statusCode = 404;
+      return res.end(JSON.stringify({ message: "Usuário não encontrado." }));
+    }
+
+    usuarios.splice(idUsuario, 1);
+
+    res.statusCode = 200;
+    return res.end(JSON.stringify({
+      message: `O usuário de ID ${idUrl} foi deletado com sucesso!`
+    }));
+  }
+
+  if (req.url === '/usuarios' && req.method === 'GET') {
 
     const quantUsuarios = usuarios.length; // nao colocar a zorra do (), pois o length é metodo NAO é função 
     const apenasNomes = usuarios.map(usuario => usuario.name);
